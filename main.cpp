@@ -4,7 +4,7 @@
 #include <queue>
 #include <chrono>
 
-//Compile Command: g++ -std=c++17 -Wall main.cpp -o main.exe   -lsfml-graphics -lsfml-window -lsfml-system
+//Compile Command: g++ -std=c++17 -Wall main.cpp -o main.exe -lsfml-graphics -lsfml-window -lsfml-system
 
 int main(){
     sf::RenderWindow window(sf::VideoMode({2560, 1440}), "SFML Window");
@@ -20,6 +20,75 @@ int main(){
     backGroundSprite.setScale({0.58, 0.58});
     float halfWidth = backGroundSprite.getLocalBounds().size.x / 2;
     backGroundSprite.setPosition({1280 - halfWidth * 0.58, 0});
+
+    sf::Texture busTexture;
+    loaded = busTexture.loadFromFile("marker.png");
+    if(!loaded){
+        throw "marker.png failed to load";
+    }
+    sf::Sprite busSprite(busTexture);
+    busSprite.setOrigin({50.f, 50.f});
+    busSprite.setScale({0.4, 0.4});
+
+    sf::Texture personSignTexture;
+    loaded = personSignTexture.loadFromFile("personWaiting.png");
+    if(!loaded){
+        throw "personWaiting.png failed to load";
+    }
+    sf::Sprite personSignSprite(personSignTexture);
+    personSignSprite.setOrigin({100.f, 100.f});
+    personSignSprite.setScale({0.15, 0.15});
+
+    std::vector<sf::Vector2f> personSignPositions;
+    personSignPositions.push_back({1088, 1086});
+    personSignPositions.push_back({1175, 548});
+    personSignPositions.push_back({1043, 53});
+    personSignPositions.push_back({1420, 491});
+    personSignPositions.push_back({1375, 832});
+
+    sf::Font font;
+    loaded = font.openFromFile("times.ttf");
+    if(!loaded){
+        throw "times.ttf failed to load";
+    }
+    sf::Text controlText(font);
+    controlText.setString("Controls:\n\nUse keys 1-5 to signal that a pedestrian is\nwaiting at a bus stop");
+    controlText.setCharacterSize(36);
+    controlText.setFillColor(sf::Color::Black);
+    controlText.setPosition({1800.f, 400.f});
+
+    sf::Text stopText(font);
+    stopText.setString("Stop ");
+    stopText.setCharacterSize(36);
+    stopText.setFillColor(sf::Color::Blue);
+
+    std::vector<sf::Vector2f> textPositions;
+    textPositions.push_back({988, 1136});
+    textPositions.push_back({1060, 598});
+    textPositions.push_back({1003, 123});
+    textPositions.push_back({1430, 541});
+    textPositions.push_back({1405, 862});
+
+    std::vector<sf::CircleShape> stopRings;
+
+    sf::CircleShape ring(10.f);
+    ring.setFillColor(sf::Color::Transparent);
+    ring.setOutlineThickness(8.f);
+    ring.setOutlineColor(sf::Color::Transparent);
+    ring.setOrigin({10.f, 10.f});
+
+    ring.setPosition({1088.f, 1136.f});
+    stopRings.push_back(ring);
+    ring.setPosition({1175.f, 598.f});
+    stopRings.push_back(ring);
+    ring.setPosition({1043.f, 103.f});
+    stopRings.push_back(ring);
+    ring.setPosition({1420.f, 541.f});
+    stopRings.push_back(ring);
+    ring.setPosition({1375.f, 882.f});
+    stopRings.push_back(ring);
+
+    std::vector<float> ringAlphas = {0, 0, 0, 0, 0};
 
     std::vector<std::vector<sf::Vector2f>> stopPaths;
 
@@ -66,7 +135,7 @@ int main(){
     int currentPathIndex = 0;
 
     std::queue<sf::Vector2f> pathQueue;
-    for(int i = 0; i < stopPaths[currentPathIndex].size(); i++){
+    for(size_t i = 0; i < stopPaths[currentPathIndex].size(); i++){
         pathQueue.push(stopPaths[currentPathIndex][i]);
     }
 
@@ -75,13 +144,13 @@ int main(){
     sf::Vector2f nextPosition = pathQueue.front();
     pathQueue.pop();
     sf::Vector2f velocity = (nextPosition - currentPosition).normalized();
-    float speed = 200;
+    float speed = 60;
+    float blipSpeed = 25;
 
     //Test before sprite added
-    sf::RectangleShape rectangle(sf::Vector2f(50.0f, 50.0f));
-    rectangle.setFillColor(sf::Color::Green);
-    rectangle.setPosition(currentPosition);
-    rectangle.setOrigin({25.f, 25.f}); 
+    //sf::busSpriteShape busSprite(sf::Vector2f(50.0f, 50.0f));
+    //busSprite.setFillColor(sf::Color::Red);
+    busSprite.setPosition(currentPosition); 
 
     bool shouldStop[5] = {};
 
@@ -123,23 +192,38 @@ int main(){
                 window.setView(view);
             }
             if (const auto* keyEvent = event->getIf<sf::Event::KeyPressed>()) {
-                if (keyEvent->code == sf::Keyboard::Key::Num1) {
+                if (keyEvent->code == sf::Keyboard::Key::Num1 && !shouldStop[0]) {
                     shouldStop[0] = true;
-                } else if (keyEvent->code == sf::Keyboard::Key::Num2) {
+                    stopRings[0].setRadius(7.f);
+                    stopRings[0].setOutlineColor(sf::Color::Red);
+                    ringAlphas[0] = 255;
+                } else if (keyEvent->code == sf::Keyboard::Key::Num2 && !shouldStop[1]) {
                     shouldStop[1] = true;
-                } else if (keyEvent->code == sf::Keyboard::Key::Num3) {
+                    stopRings[1].setRadius(7.f);
+                    stopRings[1].setOutlineColor(sf::Color::Red);
+                    ringAlphas[1] = 255;
+                } else if (keyEvent->code == sf::Keyboard::Key::Num3 && !shouldStop[2]) {
                     shouldStop[2] = true;
-                } else if (keyEvent->code == sf::Keyboard::Key::Num4) {
+                    stopRings[2].setRadius(7.f);
+                    stopRings[2].setOutlineColor(sf::Color::Red);
+                    ringAlphas[2] = 255;
+                } else if (keyEvent->code == sf::Keyboard::Key::Num4 && !shouldStop[3]) {
                     shouldStop[3] = true;
-                } else if (keyEvent->code == sf::Keyboard::Key::Num5) {
+                    stopRings[3].setRadius(7.f);
+                    stopRings[3].setOutlineColor(sf::Color::Red);
+                    ringAlphas[3] = 255;
+                } else if (keyEvent->code == sf::Keyboard::Key::Num5 && !shouldStop[4]) {
                     shouldStop[4] = true;
+                    stopRings[4].setRadius(7.f);
+                    stopRings[4].setOutlineColor(sf::Color::Red);
+                    ringAlphas[4] = 255;
                 }
             }
         }
 
         if(!stopping){
             currentPosition += velocity * (speed * deltaTime);
-            rectangle.setPosition(currentPosition);
+            busSprite.setPosition(currentPosition);
 
             if((currentPosition - nextPosition).length() < 1){
                 currentPosition = nextPosition;
@@ -150,9 +234,13 @@ int main(){
                         stopping = true;
                         shouldStop[stoppingIndex] = false;
                         initialTime = std::chrono::steady_clock::now();
+
+                        stopRings[stoppingIndex].setRadius(7.f);
+                        stopRings[stoppingIndex].setOutlineColor(sf::Color::Green);
+                        ringAlphas[stoppingIndex] = 255;
                     }
                     currentPathIndex = (currentPathIndex + 1) % 5;
-                    for(int i = 0; i < stopPaths[currentPathIndex].size(); i++){
+                    for(size_t i = 0; i < stopPaths[currentPathIndex].size(); i++){
                         pathQueue.push(stopPaths[currentPathIndex][i]);
                     }
                 }
@@ -168,10 +256,38 @@ int main(){
             }
         }
 
-        window.clear();
+        window.clear(sf::Color::White);
 
         window.draw(backGroundSprite);
-        window.draw(rectangle);
+        for(size_t i = 0; i < stopRings.size(); i++){
+            float radius = stopRings[i].getRadius();
+            if(radius < 20){
+                stopRings[i].setRadius(radius + blipSpeed * deltaTime);
+                float newRadius = stopRings[i].getRadius();
+                stopRings[i].setOrigin({newRadius, newRadius});
+            }
+            if(ringAlphas[i] > 0){
+                ringAlphas[i] -= blipSpeed * 10 * deltaTime;
+                sf::Color currentColor = stopRings[i].getOutlineColor();
+                currentColor.a = ringAlphas[i];
+                stopRings[i].setOutlineColor(currentColor);
+            }
+            window.draw(stopRings[i]);
+        }
+
+        for(size_t i = 0; i < personSignPositions.size(); i++){
+            if(shouldStop[i]){
+                personSignSprite.setPosition(personSignPositions[i]);
+                window.draw(personSignSprite);
+            }
+        }
+        for(size_t i = 0; i < textPositions.size(); i++){
+            stopText.setString("Stop " + std::to_string(i + 1));
+            stopText.setPosition(textPositions[i]);
+            window.draw(stopText);
+        }
+        window.draw(busSprite);
+        window.draw(controlText);
 
         window.display();
     }
